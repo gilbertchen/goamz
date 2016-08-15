@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goamz/goamz/aws"
-	"github.com/goamz/goamz/s3"
-	"github.com/goamz/goamz/testutil"
+	"github.com/gilbertchen/goamz/aws"
+	"github.com/gilbertchen/goamz/s3"
+	"github.com/gilbertchen/goamz/testutil"
 	. "gopkg.in/check.v1"
 )
 
@@ -177,7 +177,7 @@ func (s *S) TestGetNotFound(c *C) {
 // PutObject docs: http://goo.gl/FEBPD
 
 func (s *S) TestPutObject(c *C) {
-	testServer.Response(200, nil, "")
+	testServer.Response(500, nil, "please try again")
 
 	b := s.s3.Bucket("bucket")
 	err := b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{})

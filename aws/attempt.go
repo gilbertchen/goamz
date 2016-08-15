@@ -2,6 +2,7 @@ package aws
 
 import (
 	"time"
+        "math/rand"
 )
 
 // AttemptStrategy represents a strategy for waiting for an action
@@ -51,11 +52,9 @@ func (a *Attempt) Next() bool {
 }
 
 func (a *Attempt) nextSleep(now time.Time) time.Duration {
-	sleep := a.strategy.Delay - now.Sub(a.last)
-	if sleep < 0 {
-		return 0
-	}
-	return sleep
+	sleep := a.strategy.Delay * time.Duration(a.count)
+
+        return time.Duration(float32(sleep) * rand.Float32())
 }
 
 // HasNext returns whether another attempt will be made if the current

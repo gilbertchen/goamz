@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goamz/goamz/aws"
+	"github.com/gilbertchen/goamz/aws"
 )
 
 const debug = false
@@ -119,7 +119,7 @@ type CopyObjectResult struct {
 // DefaultAttemptStrategy is the default AttemptStrategy used by S3 objects created by New.
 var DefaultAttemptStrategy = aws.AttemptStrategy{
 	Min:   5,
-	Total: 5 * time.Second,
+	Total: 10 * time.Second,
 	Delay: 200 * time.Millisecond,
 }
 
@@ -377,7 +377,7 @@ func (b *Bucket) PutHeader(path string, data []byte, customHeaders map[string][]
 
 // PutReader inserts an object into the S3 bucket by consuming data
 // from r until EOF.
-func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL, options Options) error {
+func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL, options Options) (err error) {
 	headers := map[string][]string{
 		"Content-Length": {strconv.FormatInt(length, 10)},
 		"Content-Type":   {contType},
@@ -391,7 +391,15 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 		headers: headers,
 		payload: r,
 	}
-	return b.S3.query(req, nil)
+
+        for attempt := b.S3.AttemptStrategy.Start(); attempt.Next(); {
+                err = b.S3.query(req, nil)
+                if !shouldRetry(err) {
+                        break
+                }
+        }
+
+	return err 
 }
 
 /*
