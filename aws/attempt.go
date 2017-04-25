@@ -52,7 +52,7 @@ func (a *Attempt) Next() bool {
 }
 
 func (a *Attempt) nextSleep(now time.Time) time.Duration {
-	sleep := a.strategy.Delay * time.Duration(a.count)
+	sleep := a.strategy.Delay * time.Duration(1 << uint(a.count))
 
         return time.Duration(float32(sleep) * rand.Float32())
 }
