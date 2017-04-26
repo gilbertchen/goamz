@@ -1110,7 +1110,7 @@ func shouldRetry(err error) bool {
 		return true
 	case *net.OpError:
 		switch e.Op {
-		case "read", "write", "WSARecv", "WSASend", "ConnectEx":
+		case "dial", "read", "write", "WSARecv", "WSASend", "ConnectEx":
 			return true
 		}
 	case *Error:
