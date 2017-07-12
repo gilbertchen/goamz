@@ -959,7 +959,8 @@ func (s3 *S3) prepare(req *request) error {
 	}
 	reqSignpathSpaceFix := (&url.URL{Path: signpath}).String()
 	req.headers["Host"] = []string{u.Host}
-	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
+	timestamp := time.Now().In(time.UTC).Format(time.RFC1123)
+	req.headers["x-amz-date"] = []string{timestamp[0:len(timestamp) - 3] + "GMT"}
 	if s3.Auth.Token() != "" {
 		req.headers["X-Amz-Security-Token"] = []string{s3.Auth.Token()}
 	}
