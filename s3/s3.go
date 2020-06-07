@@ -102,6 +102,8 @@ type Options struct {
 	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
 	// x-amz-storage-class []string
+  StorageClass      string
+  Tagging           string
 }
 
 type CopyOptions struct {
@@ -446,6 +448,12 @@ func (o Options) addHeaders(headers map[string][]string) {
 	if len(o.RedirectLocation) != 0 {
 		headers["x-amz-website-redirect-location"] = []string{o.RedirectLocation}
 	}
+	if len(o.StorageClass) != 0 {
+		headers["x-amz-storage-class"] = []string{o.StorageClass}
+	}
+	if len(o.Tagging) != 0 {
+		headers["x-amz-x-amz-tagging"] = []string{o.Tagging}
+	}
 	for k, v := range o.Meta {
 		headers["x-amz-meta-"+k] = v
 	}
@@ -762,6 +770,38 @@ func (b *Bucket) GetBucketContents() (*map[string]Key, error) {
 	return &bucket_contents, nil
 }
 
+//**********************************
+// *** RestoreObject
+//**********************************
+
+// RestoreRequest is the payload in the RestoreObject request
+type RestoreRequest struct {
+  Days  int   // Number of days after which object will return to archive(GLACIER)
+}
+
+// RestoreObject request a restore of an archived object in GLACIER to STANDARD class storage
+func (b *Bucket) RestoreObject(path string, days int) error{
+
+  payload := fmt.Sprintf("<RestoreRequest xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Days>%v</Days></RestoreRequest>", days)  
+	headers := map[string][]string{
+		"Content-Length": {strconv.FormatInt(int64(len(payload)), 10)},
+//		"Content-Type":   {"application/octet-stream; charset=UTF-8"},
+//    "X-Amz-Content-Sha256": {"UNSIGNED-PAYLOAD"},
+	}
+
+	req := &request{
+    headers: headers,
+		path:    path,
+		method:  "POST",
+		params:  url.Values{"restore": {""}},
+		bucket:  b.Name,
+		payload: strings.NewReader(payload),
+	}
+  err := b.S3.query(req, nil)
+	return err
+  
+}
+
 // URL returns a non-signed URL that allows retriving the
 // object at path. It only works if the object is publicly
 // readable (see SignedURL).
@@ -1035,7 +1075,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		dump, _ := httputil.DumpResponse(hresp, true)
 		log.Printf("} -> %s\n", dump)
 	}
-	if hresp.StatusCode != 200 && hresp.StatusCode != 204 && hresp.StatusCode != 206 {
+	if hresp.StatusCode > 399 {
 		defer hresp.Body.Close()
 		return nil, buildError(hresp)
 	}

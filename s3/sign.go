@@ -37,6 +37,7 @@ var s3ParamsToSign = map[string]bool{
 	"response-content-encoding":    true,
 	"website":                      true,
 	"delete":                       true,
+	"restore":                      true,
 }
 
 type keySortableTupleList []keySortableTuple
